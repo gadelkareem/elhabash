@@ -28,6 +28,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/gadelkareem/go-helpers"
 	"github.com/temoto/robotstxt-go"
+	"sync/atomic"
 )
 
 var (
@@ -60,7 +61,7 @@ const (
 	DefaultWorkerIdleTTL = 5 * time.Second
 
 	MaxAllowedGoRoutines = 10000
-	MaxCommandsInQueue   = 100000
+	MaxCommandsPerWorker = 100
 
 	//Max number of commands for client before creating a new one - with a new ProxyFactory
 	MaximumClientCommands = 300
@@ -101,6 +102,7 @@ type Fetcher struct {
 
 	// queue holds the Queue to send data to the fetcher and optionally close (stop) it.
 	queue        *Queue
+	queueLen     int32
 	ShuttingDown bool
 
 	//used mainly to display emoiji instead of debug info
@@ -205,7 +207,7 @@ func (f *Fetcher) Start(rawUrl string) *Queue {
 
 	logs.Alert("Using %d goroutines.", f.MaxWorkers)
 
-	f.snapshot = NewSnapshot(f.queue, f.Name, f.DisableSnapshot)
+	f.snapshot = NewSnapshot(f.Name, f.DisableSnapshot)
 
 	f.testMirrors()
 
@@ -222,7 +224,45 @@ func (f *Fetcher) Start(rawUrl string) *Queue {
 	f.ensureGracefulShutdown()
 
 	// Enqueue the seed, which is the first entry in the duplicates map
-	return f.Get(parsedUrl)
+	f.Get(parsedUrl)
+	go f.readCommands()
+
+	return f.queue
+}
+
+// Start starts the Fetcher, and returns the Queue to use to send Commands to be fetched.
+func (f *Fetcher) Get(u *url.URL) {
+	f.snapshot.addCommand(f.uniqueId(u, http.MethodGet), &Cmd{U: u, M: http.MethodGet})
+}
+
+func (f *Fetcher) readCommands() {
+	maxCommands := int32(MaxCommandsPerWorker * f.MaxWorkers)
+	sentCommands := make(map[string]struct{})
+	for {
+		if atomic.LoadInt32(&f.queueLen) < maxCommands {
+			f.snapshot.commandsMu.RLock()
+			for id, c := range f.snapshot.commands {
+				if _, exists := sentCommands[id]; exists {
+					continue
+				}
+				if atomic.LoadInt32(&f.queueLen) > maxCommands {
+					break
+				}
+				u := c.U
+				_, err := f.queue.SendStringGet(u)
+				if err != nil {
+					if err != ErrQueueClosed {
+						logs.Warn("enqueue get %s - %s", u, err)
+					}
+				} else {
+					f.snapshot.addDoneUrl(id)
+					logs.Debug("New URL %s added", u)
+				}
+			}
+			f.snapshot.commandsMu.RUnlock()
+		}
+		time.Sleep(2 * time.Second)
+	}
 }
 
 func (f *Fetcher) ensureGracefulShutdown() {
@@ -258,7 +298,7 @@ func (f *Fetcher) Shutdown() {
 		return
 	}
 	f.ShuttingDown = true
-	logs.Emergency("Shutting down while queue has %d commands...", f.snapshot.queueLength())
+	logs.Emergency("Shutting down while queue still has %d commands...", f.snapshot.totalCommands())
 	f.cacheQueueMu.Lock()
 	if f.Cache != nil && len(f.cacheQueue) > 0 {
 		logs.Alert("Flushing cached URLs %d", len(f.cacheQueue))
@@ -322,19 +362,7 @@ loop:
 			// go on
 		}
 
-		if !f.snapshot.addCommandInQueue(f.uniqueId(command.Url(), command.Method()), command) {
-			continue
-		}
-
-		for {
-			l := f.snapshot.queueLength()
-			if l < MaxCommandsInQueue {
-				break
-			}
-			logs.Debug("%d commands in queue..sleeping..", l)
-			time.Sleep(5 * time.Second)
-		}
-
+		atomic.AddInt32(&f.queueLen, 1)
 		// Send the request
 		//logs.Debug("New command for Url: %s", command.Url())
 		f.channels[i] <- command
@@ -432,9 +460,9 @@ loop:
 				// path disallowed by robots.txt
 				f.visit(command, nil, ErrDisallowed, false)
 			}
-			uniqueId := f.uniqueId(command.Url(), command.Method())
-			f.snapshot.addUniqueUrl(uniqueId)
-			f.snapshot.removeCommandInQueue(uniqueId)
+
+			atomic.AddInt32(&f.queueLen, -1)
+			f.snapshot.removeCommand(f.uniqueId(command.Url(), command.Method()))
 
 			// Every time a command is received, reset the ttl channel
 			ttl = time.After(f.WorkerIdleTTL)
@@ -449,12 +477,12 @@ loop:
 			}
 
 		case <-ttl:
-			if f.snapshot.queueLength() != 0 {
-				logs.Debug("Channel %d was trying to timeout while queue length is %d", routineIndex, f.snapshot.queueLength())
+			if f.snapshot.totalCommands() != 0 {
+				logs.Debug("Channel %d was trying to timeout while queue length is %d", routineIndex, f.snapshot.totalCommands())
 				ttl = time.After(f.WorkerIdleTTL)
 				continue
 			}
-			logs.Alert("Channel %d with %d unique urls", routineIndex, f.snapshot.uniqueUrlsLength())
+			logs.Alert("Channel %d with %d unique urls", routineIndex, f.snapshot.doneUrlsLength())
 			go f.Shutdown()
 			break loop
 		}
@@ -819,20 +847,6 @@ func copyCookie(s *http.Cookie, domain string) *http.Cookie {
 	return d
 }
 
-// Start starts the Fetcher, and returns the Queue to use to send Commands to be fetched.
-func (f *Fetcher) Get(u *url.URL) *Queue {
-	_, err := f.queue.SendStringGet(u)
-	if err != nil {
-		if err != ErrQueueClosed {
-			logs.Warn("enqueue get %s - %s", u, err)
-		}
-	} else {
-		logs.Debug("New URL %s added", u)
-	}
-
-	return f.queue
-}
-
 func (f *Fetcher) excludeUrl(u *url.URL) bool {
 
 	if f.StopString != "" && strings.Contains(u.String(), f.StopString) {
@@ -844,9 +858,8 @@ func (f *Fetcher) excludeUrl(u *url.URL) bool {
 		return true
 	}
 
-	uniqueId := f.uniqueId(u, "GET")
-	if f.snapshot.uniqueUrlExists(uniqueId) ||
-		f.snapshot.commandInQueue(uniqueId) {
+	uniqueId := f.uniqueId(u, http.MethodGet)
+	if f.snapshot.doneUrlExists(uniqueId) || f.snapshot.commandExists(uniqueId) {
 		return true
 	}
 
@@ -874,7 +887,7 @@ func (f *Fetcher) getRobotAgent(u *url.URL) *robotstxt.Group {
 	// Must send the robots.txt request.
 	robotsTxtUrl := u.ResolveReference(robotsTxtParsedPath)
 	// Enqueue the robots.txt request first.
-	cmd := &Cmd{U: robotsTxtUrl, M: "GET", C: f.NewClient(true, false)}
+	cmd := &Cmd{U: robotsTxtUrl, M: http.MethodGet, C: f.NewClient(true, false)}
 
 	res, err, _ := f.Request(cmd, 0)
 	if res == nil || err != nil {
@@ -1044,9 +1057,9 @@ func (f *Fetcher) testMirrors() {
 			go f.exception(err.Error())
 			return
 		}
-		f.InvalidateCache(u, "GET")
+		f.InvalidateCache(u, http.MethodGet)
 		// Do the request.
-		rs, err, _ := f.Request(&Cmd{U: u, M: "GET", C: httpClient}, 0)
+		rs, err, _ := f.Request(&Cmd{U: u, M: http.MethodGet, C: httpClient}, 0)
 		if err != nil || rs.StatusCode != http.StatusOK {
 			errorString := mirror + " is broken "
 			if err != nil {

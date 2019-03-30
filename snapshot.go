@@ -21,11 +21,11 @@ type SnapshotFile struct {
 }
 
 type Snapshot struct {
-	uniqueUrlsMu sync.RWMutex
-	uniqueUrls   map[string]bool
+	doneUrlsMu sync.RWMutex
+	doneUrls   map[string]bool
 
-	commandsInQueueMu sync.RWMutex
-	commandsInQueue   map[string]Cmd
+	commandsMu sync.RWMutex
+	commands   map[string]Cmd
 
 	takenAtMu    sync.RWMutex
 	takenAt      time.Time
@@ -38,25 +38,25 @@ type DecodableSnapshot struct {
 	C map[string]Cmd
 }
 
-func NewSnapshot(queue *Queue, name string, disableFile bool) *Snapshot {
+func NewSnapshot(name string, disableFile bool) *Snapshot {
 	path, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	h.PanicOnError(err)
 	path += "/snapshot-" + name + ".dump"
 
 	s := &Snapshot{
-		snapshotFile:    &SnapshotFile{path: path},
-		uniqueUrls:      make(map[string]bool),
-		commandsInQueue: make(map[string]Cmd),
-		takenAt:         time.Now(),
-		disableFile:     disableFile,
+		snapshotFile: &SnapshotFile{path: path},
+		doneUrls:     make(map[string]bool),
+		commands:     make(map[string]Cmd),
+		takenAt:      time.Now(),
+		disableFile:  disableFile,
 	}
 
-	s.loadSnapshot(queue)
+	s.loadSnapshot()
 
 	return s
 }
 
-func (s *Snapshot) loadSnapshot(queue *Queue) {
+func (s *Snapshot) loadSnapshot() {
 	if s.disableFile {
 		return
 	}
@@ -64,71 +64,62 @@ func (s *Snapshot) loadSnapshot(queue *Queue) {
 	if ds == nil {
 		return
 	}
-	s.uniqueUrls = ds.U
-	go time.AfterFunc(2*time.Second, func() {
-		for _, c := range ds.C {
-			queue.Send(&Cmd{U: c.U, M: c.M, DisableMirror: c.DisableMirror})
-		}
-		ds.C = nil
-	})
+	s.doneUrls = *&ds.U
+	s.commands = *&ds.C
 
-	logs.Alert("Found snapshot with %d uniqueUrls and %d commandsInQueue", len(s.uniqueUrls), len(ds.C))
+	logs.Alert("Found snapshot with %d doneUrls and %d commands", len(s.doneUrls), len(ds.C))
+	ds = nil
 	return
 }
 
-func (s *Snapshot) addCommandInQueue(id string, command Command) bool {
+func (s *Snapshot) addCommand(id string, command Command) {
 	//logs.Debug("Adding command %s", id)
-	s.commandsInQueueMu.Lock()
-	defer s.commandsInQueueMu.Unlock()
-	if _, exists := s.commandsInQueue[id]; exists {
-		return false
-	}
-	s.commandsInQueue[id] = Cmd{U: command.Url(), M: command.Method(), DisableMirror: command.isDisableMirror()}
-	return true
+	s.commandsMu.Lock()
+	defer s.commandsMu.Unlock()
+	s.commands[id] = Cmd{U: command.Url(), M: command.Method(), DisableMirror: command.isDisableMirror()}
 }
 
-func (s *Snapshot) removeCommandInQueue(id string) {
+func (s *Snapshot) removeCommand(id string) {
 	//logs.Debug("Removing command %s", id)
-	s.commandsInQueueMu.Lock()
-	delete(s.commandsInQueue, id)
-	s.commandsInQueueMu.Unlock()
+	s.commandsMu.Lock()
+	delete(s.commands, id)
+	s.commandsMu.Unlock()
 }
 
-func (s *Snapshot) commandInQueue(id string) bool {
-	s.commandsInQueueMu.RLock()
-	defer s.commandsInQueueMu.RUnlock()
-	_, exists := s.commandsInQueue[id]
+func (s *Snapshot) commandExists(id string) bool {
+	s.commandsMu.RLock()
+	defer s.commandsMu.RUnlock()
+	_, exists := s.commands[id]
 	return exists
 }
 
-func (s *Snapshot) queueLength() int {
-	s.commandsInQueueMu.RLock()
-	defer s.commandsInQueueMu.RUnlock()
-	return len(s.commandsInQueue)
+func (s *Snapshot) totalCommands() int {
+	s.commandsMu.RLock()
+	defer s.commandsMu.RUnlock()
+	return len(s.commands)
 }
 
-func (s *Snapshot) addUniqueUrl(id string) {
-	s.uniqueUrlsMu.Lock()
-	s.uniqueUrls[id] = true
-	urlCount := len(s.uniqueUrls)
-	s.uniqueUrlsMu.Unlock()
+func (s *Snapshot) addDoneUrl(id string) {
+	s.doneUrlsMu.Lock()
+	s.doneUrls[id] = true
+	urlCount := len(s.doneUrls)
+	s.doneUrlsMu.Unlock()
 	if (urlCount % TakeSnapshotCycle) == 0 {
-		logs.Debug("Found %d urls so far. Taking a snapshot.. ", urlCount)
 		s.takeSnapshot()
 	}
 }
 
-func (s *Snapshot) uniqueUrlExists(id string) bool {
-	s.uniqueUrlsMu.RLock()
-	defer s.uniqueUrlsMu.RUnlock()
-	_, exists := s.uniqueUrls[id]
+func (s *Snapshot) doneUrlExists(id string) bool {
+	s.doneUrlsMu.RLock()
+	defer s.doneUrlsMu.RUnlock()
+	_, exists := s.doneUrls[id]
 	return exists
 }
 
-func (s *Snapshot) uniqueUrlsLength() int {
-	s.uniqueUrlsMu.RLock()
-	defer s.uniqueUrlsMu.RUnlock()
-	return len(s.uniqueUrls)
+func (s *Snapshot) doneUrlsLength() int {
+	s.doneUrlsMu.RLock()
+	defer s.doneUrlsMu.RUnlock()
+	return len(s.doneUrls)
 }
 
 func (s *Snapshot) canTakeSnapshot() bool {
@@ -150,13 +141,13 @@ func (s *Snapshot) takeSnapshot() {
 		return
 	}
 
-	s.uniqueUrlsMu.RLock()
-	s.commandsInQueueMu.RLock()
-	ds := DecodableSnapshot{U: s.uniqueUrls, C: s.commandsInQueue}
-	logs.Debug("Writing snapshot with %d uniqueUrls and %d commandsInQueue", len(ds.U), len(ds.C))
+	s.doneUrlsMu.RLock()
+	s.commandsMu.RLock()
+	ds := DecodableSnapshot{U: s.doneUrls, C: s.commands}
+	logs.Debug("Writing snapshot with %d doneUrls and %d commands", len(ds.U), len(ds.C))
 	data, err := msgpack.Marshal(ds)
-	s.uniqueUrlsMu.RUnlock()
-	s.commandsInQueueMu.RUnlock()
+	s.doneUrlsMu.RUnlock()
+	s.commandsMu.RUnlock()
 	if err != nil {
 		logs.Error("Message pack Error: %v", err)
 		return
