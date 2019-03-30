@@ -94,13 +94,6 @@ func (s *Snapshot) removeCommandInQueue(id string) {
 	s.commandsInQueueMu.Unlock()
 }
 
-func (s *Snapshot) commandInQueue(id string) bool {
-	s.commandsInQueueMu.RLock()
-	defer s.commandsInQueueMu.RUnlock()
-	_, exists := s.commandsInQueue[id]
-	return exists
-}
-
 func (s *Snapshot) queueLength() int {
 	s.commandsInQueueMu.RLock()
 	defer s.commandsInQueueMu.RUnlock()

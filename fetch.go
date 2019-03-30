@@ -60,7 +60,6 @@ const (
 	DefaultWorkerIdleTTL = 5 * time.Second
 
 	MaxAllowedGoRoutines = 10000
-	MaxCommandsInQueue   = 100000
 
 	//Max number of commands for client before creating a new one - with a new ProxyFactory
 	MaximumClientCommands = 300
@@ -326,15 +325,6 @@ loop:
 			continue
 		}
 
-		for {
-			l := f.snapshot.queueLength()
-			if l < MaxCommandsInQueue {
-				break
-			}
-			logs.Debug("%d commands in queue..sleeping..", l)
-			time.Sleep(5 * time.Second)
-		}
-
 		// Send the request
 		//logs.Debug("New command for Url: %s", command.Url())
 		f.channels[i] <- command
@@ -432,9 +422,8 @@ loop:
 				// path disallowed by robots.txt
 				f.visit(command, nil, ErrDisallowed, false)
 			}
-			uniqueId := f.uniqueId(command.Url(), command.Method())
-			f.snapshot.addUniqueUrl(uniqueId)
-			f.snapshot.removeCommandInQueue(uniqueId)
+
+			f.snapshot.removeCommandInQueue(f.uniqueId(command.Url(), command.Method()))
 
 			// Every time a command is received, reset the ttl channel
 			ttl = time.After(f.WorkerIdleTTL)
@@ -827,6 +816,7 @@ func (f *Fetcher) Get(u *url.URL) *Queue {
 			logs.Warn("enqueue get %s - %s", u, err)
 		}
 	} else {
+		f.snapshot.addUniqueUrl(f.uniqueId(u, "GET"))
 		logs.Debug("New URL %s added", u)
 	}
 
@@ -844,9 +834,7 @@ func (f *Fetcher) excludeUrl(u *url.URL) bool {
 		return true
 	}
 
-	uniqueId := f.uniqueId(u, "GET")
-	if f.snapshot.uniqueUrlExists(uniqueId) ||
-		f.snapshot.commandInQueue(uniqueId) {
+	if f.snapshot.uniqueUrlExists(f.uniqueId(u, "GET")) {
 		return true
 	}
 
