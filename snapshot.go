@@ -1,16 +1,18 @@
 package elhabash
 
 import (
+	"github.com/vmihailenco/msgpack"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
 	"github.com/astaxie/beego/logs"
 
 	"github.com/gadelkareem/go-helpers"
-	"github.com/vmihailenco/msgpack"
 )
 
 const TakeSnapshotCycle = 1000
@@ -25,7 +27,7 @@ type Snapshot struct {
 	uniqueUrls   map[string]bool
 
 	commandsInQueueMu sync.RWMutex
-	commandsInQueue   map[string]Cmd
+	commandsInQueue   map[string]decodableCmd
 
 	takenAtMu    sync.RWMutex
 	takenAt      time.Time
@@ -33,9 +35,15 @@ type Snapshot struct {
 	snapshotFile *SnapshotFile
 }
 
+type decodableCmd struct {
+	U             *url.URL
+	M             string
+	DisableMirror bool
+}
+
 type DecodableSnapshot struct {
 	U map[string]bool
-	C map[string]Cmd
+	C map[string]decodableCmd
 }
 
 func NewSnapshot(queue *Queue, name string, disableFile bool) *Snapshot {
@@ -46,7 +54,7 @@ func NewSnapshot(queue *Queue, name string, disableFile bool) *Snapshot {
 	s := &Snapshot{
 		snapshotFile:    &SnapshotFile{path: path},
 		uniqueUrls:      make(map[string]bool),
-		commandsInQueue: make(map[string]Cmd),
+		commandsInQueue: make(map[string]decodableCmd),
 		takenAt:         time.Now(),
 		disableFile:     disableFile,
 	}
@@ -64,15 +72,28 @@ func (s *Snapshot) loadSnapshot(queue *Queue) {
 	if ds == nil {
 		return
 	}
-	s.uniqueUrls = ds.U
-	go time.AfterFunc(2*time.Second, func() {
-		for _, c := range ds.C {
-			queue.Send(&Cmd{U: c.U, M: c.M, DisableMirror: c.DisableMirror})
-		}
-		ds.C = nil
-	})
+	for k, v := range ds.U {
+		s.uniqueUrls[k] = v
+	}
 
 	logs.Alert("Found snapshot with %d uniqueUrls and %d commandsInQueue", len(s.uniqueUrls), len(ds.C))
+	go func(commands map[string]decodableCmd) {
+		time.Sleep(2 * time.Second)
+		for _, c := range commands {
+			err := queue.Send(&Cmd{U: h.ParseUrl(c.U.String()), M: c.M, DisableMirror: c.DisableMirror})
+			if err != nil {
+				logs.Error("Error sending command %v", err)
+			}
+		}
+		commands = nil
+		runtime.GC()
+	}(ds.C)
+
+	s.takenAt = time.Now()
+
+	ds = nil
+	runtime.GC()
+
 	return
 }
 
@@ -83,7 +104,7 @@ func (s *Snapshot) addCommandInQueue(id string, command Command) bool {
 	if _, exists := s.commandsInQueue[id]; exists {
 		return false
 	}
-	s.commandsInQueue[id] = Cmd{U: command.Url(), M: command.Method(), DisableMirror: command.isDisableMirror()}
+	s.commandsInQueue[id] = decodableCmd{U: command.Url(), M: command.Method(), DisableMirror: command.isDisableMirror()}
 	return true
 }
 
@@ -194,7 +215,7 @@ func (sf *SnapshotFile) load() *DecodableSnapshot {
 	}
 	ds := &DecodableSnapshot{
 		U: make(map[string]bool),
-		C: make(map[string]Cmd),
+		C: make(map[string]decodableCmd),
 	}
 	err = msgpack.Unmarshal(data, ds)
 	if err != nil {
