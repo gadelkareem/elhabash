@@ -27,7 +27,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/astaxie/beego/logs"
 	"github.com/gadelkareem/go-helpers"
-	"github.com/temoto/robotstxt-go"
+	"github.com/temoto/robotstxt"
 )
 
 var (

@@ -17,8 +17,8 @@ github.com/mediocregopher/radix/v3
 github.com/mediocregopher/radix/v3/internal/bytesutil
 github.com/mediocregopher/radix/v3/resp
 github.com/mediocregopher/radix/v3/resp/resp2
-# github.com/temoto/robotstxt-go v0.0.0-20180810133444-97ee4a9ee6ea
-github.com/temoto/robotstxt-go
+# github.com/temoto/robotstxt v0.0.0-20180810133444-97ee4a9ee6ea
+github.com/temoto/robotstxt
 # github.com/vmihailenco/msgpack v4.0.1+incompatible
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
