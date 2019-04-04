@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gadelkareem/cachita"
+	"github.com/gadelkareem/faloota"
 	"github.com/gadelkareem/quiver"
 	"golang.org/x/text/encoding/htmlindex"
 	"io"
@@ -111,8 +112,12 @@ type Fetcher struct {
 
 	ProxyFactory quiver.ProxyFactory
 
+	Faloota       *faloota.Faloota
+	FalootaVerify faloota.Action
+
 	Headers          map[string]string
-	Cookies          []*http.Cookie
+	cookiesMu        sync.RWMutex
+	cookies          []*http.Cookie
 	DisableKeepAlive bool
 
 	mirrorsMu            sync.Mutex
@@ -159,10 +164,14 @@ func (f *Fetcher) Start(rawUrl string) *Queue {
 	if rLimit.Cur < 2000 {
 		panic("you need to increase file descriptors...")
 	}
-	logs.Alert("Rlimit Final %v", rLimit)
+	logs.Alert("rlimit final %v", rLimit)
 
 	if f.MainHost == "" {
 		panic("no MainHost specified...")
+	}
+
+	if f.Faloota != nil && f.FalootaVerify == nil {
+		panic("no verify func found for faloota")
 	}
 
 	f.startTime = time.Now()
@@ -321,9 +330,7 @@ loop:
 			// go on
 		}
 
-		if !f.snapshot.addCommandInQueue(f.uniqueId(command.Url(), command.Method()), command) {
-			continue
-		}
+		f.snapshot.addCommandInQueue(f.uniqueId(command.Url(), command.Method()), command)
 
 		// Send the request
 		//logs.Debug("New command for Url: %s", command.Url())
@@ -505,7 +512,7 @@ func (f *Fetcher) Request(cmd Command, delay time.Duration) (response *http.Resp
 		req.Header.Set("Referer", referrer.String())
 	}
 
-	f.addCookies(httpClient, cmd)
+	f.passCookies(httpClient, cmd)
 
 	f.sleeping(false)
 	logs.Info("Taking a nap for %s", delay)
@@ -522,7 +529,7 @@ func (f *Fetcher) Request(cmd Command, delay time.Duration) (response *http.Resp
 
 	if cmd.Url().Scheme == "http" && req.Header.Get("Request-IP") == "" && cmd.HttpClient().ProxyOutboundIp != "" {
 		req.Header.Set("Request-IP", cmd.HttpClient().ProxyOutboundIp)
-		logs.Debug("Using ProxyFactory:%s", cmd.HttpClient().ProxyOutboundIp)
+		logs.Debug("Using proxy:%s", cmd.HttpClient().ProxyOutboundIp)
 	}
 
 	// Do the request.
@@ -560,7 +567,7 @@ func (f *Fetcher) visit(cmd Command, response *http.Response, err error, isCache
 	}()
 	hasErrors, brokenMirror, brokenUrl := f.HandleError(response, err, cmd)
 	if hasErrors {
-		logs.Debug("🔥 Error with Url: %s ProxyFactory: %s Error: %v", cmd.MirrorUrl(), cmd.HttpClient().ProxyUrl, err)
+		logs.Debug("🔥 Error with Url: %s proxy: %s Error: %v", cmd.MirrorUrl(), cmd.HttpClient().ProxyUrl, err)
 		if brokenMirror {
 			restartClient = true
 		}
@@ -654,11 +661,13 @@ func (f *Fetcher) NewClient(withProxy, withMirror bool) *Client {
 	}
 	httpClient.Timeout = ClientTimeout * 2 * time.Second
 
+	proxyUrl := ""
 	if httpClient.ProxyUrl != nil {
 		transport.Proxy = http.ProxyURL(httpClient.ProxyUrl)
 		if httpClient.ProxyOutboundIp != "" {
 			transport.ProxyConnectHeader = http.Header{"Request-IP": []string{httpClient.ProxyOutboundIp}}
 		}
+		proxyUrl = httpClient.ProxyUrl.String()
 	}
 	httpClient.Transport = transport
 	httpClient.UserAgent = userAgents[h.RandomNumber(0, len(userAgents))]
@@ -666,15 +675,49 @@ func (f *Fetcher) NewClient(withProxy, withMirror bool) *Client {
 		return http.ErrUseLastResponse
 	}
 
+	host := f.MainHost
 	if withMirror && len(f.Mirrors) > 0 {
 		f.mirrorsMu.Lock()
 		defer f.mirrorsMu.Unlock()
 		httpClient.Mirror = f.Mirrors[h.RandomNumber(0, len(f.Mirrors))]
+		host = httpClient.Mirror
+	}
+
+	if f.Faloota != nil {
+		u := "http://" + host
+		cookies, err := f.Faloota.BypassOnce(u, proxyUrl, httpClient.UserAgent, f.FalootaVerify)
+		if err != nil {
+			logs.Error("Falouta error on url %s Error: %v", u, err)
+		} else {
+			httpClient.Jar.SetCookies(h.ParseUrl(u), cookies)
+		}
 	}
 
 	logs.Info("New client created with Mirror: %s, proxy: %s", httpClient.Mirror, httpClient.ProxyUrl)
 
 	return httpClient
+}
+
+func (f *Fetcher) AddCookies(cookies []*http.Cookie) {
+	f.cookiesMu.Lock()
+	defer f.cookiesMu.Unlock()
+	if f.cookies == nil {
+		f.cookies = cookies
+	}
+
+	added := false
+	for _, c := range cookies {
+		for x, ck := range f.cookies {
+			if c.Name == ck.Name {
+				f.cookies[x] = c
+				added = true
+			}
+		}
+		if !added {
+			f.cookies = append(f.cookies, c)
+			added = false
+		}
+	}
 }
 
 func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (hasErrors, brokenMirror, brokenUrl bool) {
@@ -689,14 +732,20 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
 		hasErrors = true
 	} else if response.StatusCode != http.StatusOK {
 		hasErrors = true
+		if response.StatusCode == http.StatusServiceUnavailable &&
+			strings.Contains(response.Header.Get("Server"), "cloudflare") {
+			logs.Error("🔥🔥 Got Cloudflare error for %s", cmd.HttpClient().ProxyUrl)
+			goto recordErr
+		}
 		if response.StatusCode == 549 { //Zaki Edra is still assigning the IP so resend cmd
-			return
-		} else if f.ProxyFactory != nil &&
+			goto recordErr
+		}
+		if f.ProxyFactory != nil &&
 			cmd.HttpClient().ProxyUrl != nil &&
 			(response.StatusCode == 550 || //invalid IP
 				response.StatusCode == 551 || //banned IP
 				response.StatusCode == 552) { //auth problem
-			go f.exception("🔥🔥 ProxyFactory " + cmd.HttpClient().ProxyUrl.String() + " has Auth problem!")
+			go f.exception("🔥🔥 proxy " + cmd.HttpClient().ProxyUrl.String() + " has Auth problem!")
 			return
 		} else if response.StatusCode == http.StatusMovedPermanently ||
 			response.StatusCode == http.StatusFound {
@@ -742,6 +791,7 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
 		return
 	}
 
+recordErr:
 	f.urlErrorsMu.Lock()
 	defer f.urlErrorsMu.Unlock()
 	rawUrl := cmd.Url().String()
@@ -784,28 +834,14 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
 	return
 }
 
-func (f *Fetcher) addCookies(client *Client, cmd Command) {
-	if f.Cookies == nil {
+func (f *Fetcher) passCookies(client *Client, cmd Command) {
+	f.cookiesMu.RLock()
+	defer f.cookiesMu.RUnlock()
+	if f.cookies == nil {
 		return
 	}
-	var cookies []*http.Cookie
-	for _, c := range f.Cookies {
-		nc := copyCookie(c, cmd.MirrorUrl().Hostname())
-		cookies = append(cookies, nc)
-	}
-	client.Jar.SetCookies(cmd.MirrorUrl(), cookies)
-	logs.Debug("Set Cookies: %+v", cookies)
-}
-
-func copyCookie(s *http.Cookie, domain string) *http.Cookie {
-	if s.Domain == "" || s.Domain == domain {
-		return s
-	}
-	d := new(http.Cookie)
-	*d = *s
-	d.Domain = domain
-	d.Raw = d.String()
-	return d
+	client.Jar.SetCookies(cmd.MirrorUrl(), f.cookies)
+	logs.Debug("Set Cookies: %+v", f.cookies)
 }
 
 // Start starts the Fetcher, and returns the Queue to use to send Commands to be fetched.
