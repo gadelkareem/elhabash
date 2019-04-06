@@ -1045,11 +1045,11 @@ func (f *Fetcher) enqueueLinks(baseUrl *url.URL, document *goquery.Document) {
 }
 
 func (f *Fetcher) testMirrors() {
-	f.mirrorsMu.Lock()
-	defer f.mirrorsMu.Unlock()
 	if f.Mirrors == nil || f.DisableMirrorTesting {
 		return
 	}
+	f.mirrorsMu.Lock()
+	defer f.mirrorsMu.Unlock()
 	httpClient := f.NewClient(true, false)
 	httpClient.CheckRedirect = nil
 	var mirrors []string
@@ -1087,7 +1087,7 @@ func (f *Fetcher) testMirrors() {
 }
 
 func (f *Fetcher) bypass(host, proxyUrl string, httpClient *Client) {
-	if f.Faloota != nil {
+	if f.Faloota == nil {
 		return
 	}
 	u := "http://" + host
@@ -1097,4 +1097,5 @@ func (f *Fetcher) bypass(host, proxyUrl string, httpClient *Client) {
 		return
 	}
 	httpClient.Jar.SetCookies(h.ParseUrl(u), cookies)
+	logs.Debug("added cookies to client %+v", cookies)
 }
