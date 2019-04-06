@@ -683,15 +683,7 @@ func (f *Fetcher) NewClient(withProxy, withMirror bool) *Client {
 		host = httpClient.Mirror
 	}
 
-	if f.Faloota != nil {
-		u := "http://" + host
-		cookies, err := f.Faloota.BypassOnce(u, proxyUrl, httpClient.UserAgent, f.FalootaVerify)
-		if err != nil {
-			logs.Error("Falouta error on url %s Error: %v", u, err)
-		} else {
-			httpClient.Jar.SetCookies(h.ParseUrl(u), cookies)
-		}
-	}
+	f.bypass(host, proxyUrl, httpClient)
 
 	logs.Info("New client created with Mirror: %s, proxy: %s", httpClient.Mirror, httpClient.ProxyUrl)
 
@@ -1069,6 +1061,7 @@ func (f *Fetcher) testMirrors() {
 			return
 		}
 		f.InvalidateCache(u, "GET")
+		f.bypass(mirror, httpClient.ProxyUrl.String(), httpClient)
 		// Do the request.
 		rs, err, _ := f.Request(&Cmd{U: u, M: "GET", C: httpClient}, 0)
 		if err != nil || rs.StatusCode != http.StatusOK {
@@ -1091,4 +1084,17 @@ func (f *Fetcher) testMirrors() {
 	}
 	f.Mirrors = mirrors
 
+}
+
+func (f *Fetcher) bypass(host, proxyUrl string, httpClient *Client) {
+	if f.Faloota != nil {
+		return
+	}
+	u := "http://" + host
+	cookies, err := f.Faloota.BypassOnce(u, proxyUrl, httpClient.UserAgent, f.FalootaVerify)
+	if err != nil {
+		logs.Error("Falouta error on url %s Error: %v", u, err)
+		return
+	}
+	httpClient.Jar.SetCookies(h.ParseUrl(u), cookies)
 }
