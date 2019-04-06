@@ -29,6 +29,8 @@ github.com/gadelkareem/cachita v0.0.0-20190120182126-27c05434ad48 h1:zX9dGvlcwSz
 github.com/gadelkareem/cachita v0.0.0-20190120182126-27c05434ad48/go.mod h1:4LT05LDDyEmidjinKMnpuRIw4I86/sZpGk1ljj+qa5Q=
 github.com/gadelkareem/faloota v0.0.0-20190406052546-07b4988371bf h1:uss2XS0hdN8LeoQhhejndubEntz404/oDYxQeBqrkN4=
 github.com/gadelkareem/faloota v0.0.0-20190406052546-07b4988371bf/go.mod h1:yxhedFOxusGmr2mEj5GrVQwSahcNj7Y0no6zY5ID5vs=
+github.com/gadelkareem/faloota v0.0.0-20190406065709-6233558e8465 h1:poCAZbsLU8Ie5CEikB+HfeYK5XkmoSccCxdW/Umz2EI=
+github.com/gadelkareem/faloota v0.0.0-20190406065709-6233558e8465/go.mod h1:yxhedFOxusGmr2mEj5GrVQwSahcNj7Y0no6zY5ID5vs=
 github.com/gadelkareem/go-helpers v0.0.0-20190319181513-ba9be2e077db/go.mod h1:CrgzdMSK56JBYsFIItseMvw0uDYG8yBV2cvqjSCwOS8=
 github.com/gadelkareem/go-helpers v0.0.0-20190329120330-3d7730cbae83 h1:qbViEYDKQ6461e/SN/5kot05qvZ98drcInraopMZNxg=
 github.com/gadelkareem/go-helpers v0.0.0-20190329120330-3d7730cbae83/go.mod h1:CrgzdMSK56JBYsFIItseMvw0uDYG8yBV2cvqjSCwOS8=
