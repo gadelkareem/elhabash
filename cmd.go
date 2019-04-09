@@ -13,6 +13,7 @@ type Command interface {
 	ReferrerUrl() *url.URL
 	Method() string
 	HttpClient() *Client
+	Request() *http.Request
 	SetHttpClient(client *Client)
 	isDisableMirror() bool
 	isDisableCache() bool
@@ -32,6 +33,7 @@ type Cmd struct {
 	U             *url.URL
 	M             string
 	C             *Client
+	R             *http.Request
 	DisableMirror bool
 	disableCache  bool
 	Referrer      *url.URL
@@ -75,6 +77,10 @@ func (c *Cmd) isDisableCache() bool {
 
 func (c *Cmd) DisableCache() {
 	c.disableCache = true
+}
+
+func (c *Cmd) Request() *http.Request {
+	return c.R
 }
 
 func (c *Cmd) HttpClient() *Client {
