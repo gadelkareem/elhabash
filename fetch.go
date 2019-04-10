@@ -541,7 +541,7 @@ func (f *Fetcher) Request(cmd Command, delay time.Duration) (response *http.Resp
 		return
 	}
 
-	if response != nil && cmd.Method() == http.MethodGet {
+	if response != nil {
 		if response.StatusCode == http.StatusOK ||
 			(httpClient.Mirror == "" && //if we ll cache a redirect or not found then make sure it's not a mirror
 				(response.StatusCode == http.StatusMovedPermanently || response.StatusCode == http.StatusNotFound)) {
