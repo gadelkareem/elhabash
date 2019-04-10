@@ -490,7 +490,7 @@ func (f *Fetcher) Request(cmd Command, delay time.Duration) (response *http.Resp
 		cacheId = f.cacheId(cmd.Url(), cmd.Method())
 		if cacheId != "" {
 			response = f.getCachedResponse(cacheId)
-			if response != nil && response.StatusCode != http.StatusMovedPermanently {
+			if response != nil {
 				isCached = true
 				response.Request = req
 				if f.LogLevel < logs.LevelNotice {
@@ -544,7 +544,7 @@ func (f *Fetcher) Request(cmd Command, delay time.Duration) (response *http.Resp
 	if response != nil && cmd.Method() == http.MethodGet {
 		if response.StatusCode == http.StatusOK ||
 			(httpClient.Mirror == "" && //if we ll cache a redirect or not found then make sure it's not a mirror
-				response.StatusCode == http.StatusNotFound) {
+				(response.StatusCode == http.StatusMovedPermanently || response.StatusCode == http.StatusNotFound)) {
 			if cacheId != "" {
 				response.Request = req
 				f.cacheResponse(cmd, cacheId, response, forceUpdateCache)
