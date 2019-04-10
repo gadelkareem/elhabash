@@ -486,22 +486,23 @@ func (f *Fetcher) Request(cmd Command, delay time.Duration) (response *http.Resp
 	}
 
 	forceUpdateCache := false
-
-	cacheId = f.cacheId(cmd.Url(), cmd.Method())
-	if cacheId != "" {
-		response = f.getCachedResponse(cacheId)
-		if response != nil {
-			isCached = true
-			response.Request = req
-			if f.LogLevel < logs.LevelNotice {
-				fmt.Print("➰")
+	if !cmd.isDisableCache() {
+		cacheId = f.cacheId(cmd.Url(), cmd.Method())
+		if cacheId != "" {
+			response = f.getCachedResponse(cacheId)
+			if response != nil {
+				isCached = true
+				response.Request = req
+				if f.LogLevel < logs.LevelNotice {
+					fmt.Print("➰")
+				}
+				logs.Info("Got cache for Url: %s cacheId: %s", rawUrl, cacheId)
+				return
 			}
-			logs.Info("Got cache for Url: %s cacheId: %s", rawUrl, cacheId)
-			return
+			forceUpdateCache = true
 		}
-		forceUpdateCache = true
+		logs.Info("No cache found for Url: %s cacheId: %s", rawUrl, cacheId)
 	}
-	logs.Info("No cache found for Url: %s cacheId: %s", rawUrl, cacheId)
 
 	if f.DisableKeepAlive {
 		req.Close = true

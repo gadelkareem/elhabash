@@ -17,7 +17,6 @@ type Command interface {
 	SetHttpClient(client *Client)
 	isDisableMirror() bool
 	isDisableCache() bool
-	DisableCache()
 }
 
 type Client struct {
@@ -35,7 +34,7 @@ type Cmd struct {
 	C             *Client
 	R             *http.Request
 	DisableMirror bool
-	disableCache  bool
+	DisableCache  bool
 	Referrer      *url.URL
 }
 
@@ -72,11 +71,7 @@ func (c *Cmd) isDisableMirror() bool {
 }
 
 func (c *Cmd) isDisableCache() bool {
-	return c.disableCache
-}
-
-func (c *Cmd) DisableCache() {
-	c.disableCache = true
+	return c.DisableCache
 }
 
 func (c *Cmd) Request() *http.Request {
