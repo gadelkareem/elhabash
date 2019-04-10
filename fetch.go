@@ -590,7 +590,7 @@ func (f *Fetcher) visit(cmd Command, response *http.Response, err error, isCache
 	}
 
 	var document *goquery.Document
-	if f.KeepCrawling && strings.Contains(response.Header.Get("content-type"), "text") {
+	if strings.Contains(response.Header.Get("content-type"), "text") {
 		logs.Info("Parsing Url %s", cmd.Url())
 		var body io.Reader
 		if f.DecodeCharset != "" && f.DecodeCharset != "utf-8" {
@@ -608,7 +608,9 @@ func (f *Fetcher) visit(cmd Command, response *http.Response, err error, isCache
 			logs.Error("Error parsing html %s %s - %s", cmd.Method(), cmd.Url(), err)
 			return
 		}
-		f.enqueueLinks(cmd.MirrorUrl(), document)
+		if f.KeepCrawling {
+			f.enqueueLinks(cmd.MirrorUrl(), document)
+		}
 	}
 
 	logs.Info("Passing to handler Url %s", cmd.Url())
