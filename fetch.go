@@ -484,9 +484,10 @@ func (f *Fetcher) Request(cmd Command, delay time.Duration) (response *http.Resp
 			return
 		}
 	}
+	cmd.SetRequest(req)
 
 	forceUpdateCache := false
-	if !cmd.isDisableCache() {
+	if cmd.Method() == http.MethodGet {
 		cacheId = f.cacheId(cmd.Url(), cmd.Method())
 		if cacheId != "" {
 			response = f.getCachedResponse(cacheId)

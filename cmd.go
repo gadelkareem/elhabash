@@ -14,7 +14,8 @@ type Command interface {
 	Method() string
 	HttpClient() *Client
 	Request() *http.Request
-	SetHttpClient(client *Client)
+	SetHttpClient(client *Client) Command
+	SetRequest(r *http.Request) Command
 	isDisableMirror() bool
 	isDisableCache() bool
 }
@@ -82,6 +83,14 @@ func (c *Cmd) HttpClient() *Client {
 	return c.C
 }
 
-func (c *Cmd) SetHttpClient(client *Client) {
+func (c *Cmd) SetHttpClient(client *Client) Command {
 	c.C = client
+	return c
+}
+
+func (c *Cmd) SetRequest(r *http.Request) Command {
+	c.R = r
+	c.U = r.URL
+	c.M = r.Method
+	return c
 }
