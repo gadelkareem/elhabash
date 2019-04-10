@@ -475,16 +475,15 @@ func (f *Fetcher) Request(cmd Command, delay time.Duration) (response *http.Resp
 		return
 	}
 
-	rawUrl := cmd.MirrorUrl().String()
-
 	req := cmd.Request()
 	if req == nil {
-		req, err = http.NewRequest(cmd.Method(), rawUrl, nil)
+		req, err = http.NewRequest(cmd.Method(), cmd.MirrorUrl().String(), nil)
 		if err != nil {
 			return
 		}
 	}
 	cmd.SetRequest(req)
+	rawUrl := cmd.MirrorUrl().String()
 
 	forceUpdateCache := false
 	if cmd.Method() == http.MethodGet {
