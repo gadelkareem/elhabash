@@ -548,7 +548,7 @@ func (f *Fetcher) Request(cmd Command, delay time.Duration) (response *http.Resp
 			if cacheId != "" {
 				response.Request = req
 				f.cacheResponse(cmd, cacheId, response, forceUpdateCache)
-				logs.Info("Cached Url: %s cacheId: %s", rawUrl, cacheId)
+				logs.Info("Cached Url: %s cacheId: %s statusCode:%d", rawUrl, cacheId, response.StatusCode)
 			}
 			if f.LogLevel < logs.LevelNotice {
 				fmt.Print("🚀")
