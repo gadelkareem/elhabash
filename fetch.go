@@ -732,6 +732,7 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
 		if response.StatusCode == http.StatusServiceUnavailable &&
 			strings.Contains(response.Header.Get("Server"), "cloudflare") {
 			logs.Error("🔥🔥 Got Cloudflare error for %s", cmd.HttpClient().ProxyUrl)
+			brokenMirror = true
 			goto recordErr
 		}
 		if response.StatusCode == 549 { //Zaki Edra is still assigning the IP so resend cmd
