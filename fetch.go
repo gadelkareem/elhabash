@@ -743,7 +743,7 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
 			(response.StatusCode == 550 || //invalid IP
 				response.StatusCode == 551 || //banned IP
 				response.StatusCode == 552) { //auth problem
-			go f.exception(fmt.Sprintf("🔥🔥 proxy %s has Auth problem! status:%d IP:%s URL:%s\n", cmd.HttpClient().ProxyUrl, response.StatusCode, cmd.HttpClient().ProxyOutboundIp, cmd.MirrorUrl()))
+			go f.exception(fmt.Sprintf("🔥🔥 proxy %s has Auth problem! status: %d IP: %s URL: %s\n", cmd.HttpClient().ProxyUrl, response.StatusCode, cmd.HttpClient().ProxyOutboundIp, cmd.MirrorUrl()))
 			return
 		} else if response.StatusCode == http.StatusMovedPermanently ||
 			response.StatusCode == http.StatusFound {
