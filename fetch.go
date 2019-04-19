@@ -776,11 +776,11 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
 		hasErrors = true
 		if netError, ok := err.(net.Error); ok && netError.Timeout() {
 			if f.ProxyFactory != nil && strings.Contains(err.Error(), "proxyconnect") {
-				logs.Error("🔥🔥 proxy " + cmd.HttpClient().ProxyUrl.String() + " failed! Error:" + err.Error())
+				logs.Error("🔥🔥 proxy %s failed! Error: %v", cmd.HttpClient().ProxyUrl.String(), err)
 			} else if strings.Contains(err.Error(), "Connection refused") {
-				logs.Error("🔥🔥 proxy Connection refused " + err.Error())
+				logs.Error("🔥🔥 proxy Connection refused %v", err)
 			} else {
-				logs.Error("🔥 TIMEOUT %s", err)
+				logs.Error("🔥 TIMEOUT %s proxy: %s", err, cmd.HttpClient().ProxyUrl.String())
 			}
 		}
 	}
