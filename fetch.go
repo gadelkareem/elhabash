@@ -896,9 +896,17 @@ func (f *Fetcher) getRobotAgent(u *url.URL) *robotstxt.Group {
 	// Must send the robots.txt request.
 	robotsTxtUrl := u.ResolveReference(robotsTxtParsedPath)
 	// Enqueue the robots.txt request first.
-	cmd := &Cmd{U: robotsTxtUrl, M: "GET", C: f.NewClient(true, false)}
 
-	res, err, _ := f.Request(cmd, 0)
+	var res *http.Response
+	err := h.Retry(func() (e error) {
+		cmd := &Cmd{U: robotsTxtUrl, M: "GET", C: f.NewClient(true, false)}
+		res, e, _ = f.Request(cmd, 0)
+		if e != nil {
+			logs.Error("Error fetching robots.txt: %v", e)
+		}
+		return e
+	}, 5)
+
 	if res == nil || err != nil {
 		errString := "Error fetching robots.txt: "
 		if err != nil {
