@@ -114,6 +114,7 @@ type Fetcher struct {
 
 	Faloota       *faloota.Faloota
 	FalootaVerify faloota.Action
+	FalootaUrl    string
 
 	Headers          map[string]string
 	cookiesMu        sync.RWMutex
@@ -170,8 +171,8 @@ func (f *Fetcher) Start(rawUrl string) *Queue {
 		panic("no MainHost specified...")
 	}
 
-	if f.Faloota != nil && f.FalootaVerify == nil {
-		panic("no verify func found for faloota")
+	if f.Faloota != nil && (f.FalootaVerify == nil || f.FalootaUrl == "") {
+		panic("no verify or url found for faloota")
 	}
 
 	f.startTime = time.Now()
@@ -1104,12 +1105,11 @@ func (f *Fetcher) bypass(host, proxyUrl string, httpClient *Client) {
 	if f.Faloota == nil {
 		return
 	}
-	u := "http://" + host
-	cookies, err := f.Faloota.BypassOnce(u, proxyUrl, httpClient.UserAgent, f.FalootaVerify)
+	cookies, err := f.Faloota.BypassOnce(f.FalootaUrl, proxyUrl, httpClient.UserAgent, f.FalootaVerify)
 	if err != nil {
-		logs.Error("Falouta error on url %s Error: %v", u, err)
+		logs.Error("Falouta error on url %s Error: %v", f.FalootaUrl, err)
 		return
 	}
-	httpClient.Jar.SetCookies(h.ParseUrl(u), cookies)
+	httpClient.Jar.SetCookies(h.ParseUrl(f.FalootaUrl), cookies)
 	logs.Debug("added cookies to client %+v", cookies)
 }
