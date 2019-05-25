@@ -956,7 +956,7 @@ func (f *Fetcher) getCachedResponse(cacheId string) *http.Response {
 	reader := bufio.NewReader(bytes.NewReader(page.Response))
 	response, err := http.ReadResponse(reader, nil)
 	if err != nil {
-		logs.Error("Error reading cached response: %s", err)
+		logs.Error("Error reading cached response: %s id: %s URL: %s", err, cacheId, page.RawUrl)
 	}
 
 	return response
