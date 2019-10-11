@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/gadelkareem/cachita"
 	"github.com/gadelkareem/faloota"
+	h "github.com/gadelkareem/go-helpers"
 	"github.com/gadelkareem/quiver"
 	"golang.org/x/text/encoding/htmlindex"
 	"io"
@@ -27,7 +28,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/astaxie/beego/logs"
-	"github.com/gadelkareem/go-helpers"
 	"github.com/temoto/robotstxt"
 )
 
@@ -75,12 +75,14 @@ const (
 // A HandlerFunc is a function signature that implements the Handler interface. A function
 // with this signature can thus be used as a Handler.
 type HandlerFunc func(*goquery.Document, Command, *http.Response, error)
+type ErrorHandlerFunc func(*http.Response, error, Command) (bool, bool, bool)
 
 // A Fetcher defines the parameters for running a web crawler.
 type Fetcher struct {
 	// The Handler to be called for each request. All successfully enqueued requests
 	// produce a Handler call.
-	Handler HandlerFunc
+	Handler      HandlerFunc
+	ErrorHandler ErrorHandlerFunc
 
 	// encoding string as in http://www.w3.org/TR/encoding
 	DecodeCharset string
@@ -209,6 +211,10 @@ func (f *Fetcher) Start(rawUrl string) *Queue {
 				f.MaxWorkers = 1
 			}
 		}
+	}
+
+	if f.ErrorHandler == nil {
+		f.ErrorHandler = f.HandleError
 	}
 
 	logs.Alert("Using %d goroutines.", f.MaxWorkers)
@@ -568,7 +574,7 @@ func (f *Fetcher) visit(cmd Command, response *http.Response, err error, isCache
 			response.Body.Close()
 		}
 	}()
-	hasErrors, brokenMirror, brokenUrl := f.HandleError(response, err, cmd)
+	hasErrors, brokenMirror, brokenUrl := f.ErrorHandler(response, err, cmd)
 	if hasErrors {
 		logs.Debug("🔥 Error with Url: %s proxy: %s Error: %v", cmd.MirrorUrl(), cmd.HttpClient().ProxyUrl, err)
 		if brokenMirror {
