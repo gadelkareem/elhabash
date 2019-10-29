@@ -6,12 +6,15 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/andybalholm/cascadia v1.1.0 // indirect
 	github.com/astaxie/beego v1.12.0
+	github.com/chromedp/cdproto v0.0.0-20191027233732-553aa270fe0a // indirect
+	github.com/chromedp/chromedp v0.5.1 // indirect
 	github.com/gadelkareem/cachita v0.0.0-20190120182126-27c05434ad48
-	github.com/gadelkareem/faloota v0.0.0-20191012103934-c471a9760589
-	github.com/gadelkareem/go-helpers v0.0.0-20191001005417-e8a6f26af331
-	github.com/gadelkareem/quiver v0.0.0-20190920102459-ce47163ff985
-	github.com/shiena/ansicolor v0.0.0-20151119151921-a422bbe96644 // indirect
+	github.com/gadelkareem/faloota v0.0.0-20191012121951-bed91ae1fffc
+	github.com/gadelkareem/go-helpers v0.0.0-20191028141354-37da31be3be9
+	github.com/gadelkareem/quiver v0.0.0-20191028142518-828461abd15a
 	github.com/temoto/robotstxt v1.1.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
+	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271 // indirect
+	golang.org/x/sys v0.0.0-20191028164358-195ce5e7f934 // indirect
 	golang.org/x/text v0.3.2
 )
