@@ -66,8 +66,8 @@ const (
 	MaximumClientCommands = 300
 
 	//Max number of Url errors
-	MaxUrlErrors    = 10
-	MaxMirrorErrors = 500
+	MaxUrlErrors    = 20
+	MaxMirrorErrors = 1000
 
 	ClientTimeout = 30
 )
