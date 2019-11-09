@@ -911,7 +911,7 @@ func (f *Fetcher) getRobotAgent(u *url.URL) *robotstxt.Group {
 			logs.Error("Error fetching robots.txt: %v", e)
 		}
 		return e
-	}, 5)
+	}, 15)
 
 	if res == nil || err != nil {
 		errString := "Error fetching robots.txt: "
