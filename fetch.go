@@ -731,25 +731,27 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
 		return true, false, true
 	}
 
+	httpClient := cmd.HttpClient()
 	if response == nil {
 		hasErrors = true
 	} else if response.StatusCode != http.StatusOK {
 		hasErrors = true
 		if response.StatusCode == http.StatusServiceUnavailable &&
 			strings.Contains(response.Header.Get("Server"), "cloudflare") {
-			logs.Error("🔥🔥 Got Cloudflare error for %s", cmd.HttpClient().ProxyUrl)
-			brokenMirror = true
+			logs.Error("🔥🔥 Got Cloudflare error for URL: %s Proxy: %s", cmd.MirrorUrl(), httpClient.ProxyUrl)
+
+			brokenMirror = !f.bypass(cmd.MirrorUrl().Host, httpClient.ProxyUrl.String(), httpClient)
 			goto recordErr
 		}
 		if response.StatusCode == 549 { //Zaki Edra is still assigning the IP so resend cmd
 			goto recordErr
 		}
 		if f.ProxyFactory != nil &&
-			cmd.HttpClient().ProxyUrl != nil &&
+			httpClient.ProxyUrl != nil &&
 			(response.StatusCode == 550 || //invalid IP
 				response.StatusCode == 551 || //banned IP
 				response.StatusCode == 552) { //auth problem
-			go f.exception(fmt.Sprintf("🔥🔥 proxy %s has Auth problem! status: %d IP: %s URL: %s\n", cmd.HttpClient().ProxyUrl, response.StatusCode, cmd.HttpClient().ProxyOutboundIp, cmd.MirrorUrl()))
+			go f.exception(fmt.Sprintf("🔥🔥 proxy %s has Auth problem! status: %d IP: %s URL: %s\n", httpClient.ProxyUrl, response.StatusCode, httpClient.ProxyOutboundIp, cmd.MirrorUrl()))
 			return
 		} else if response.StatusCode == http.StatusMovedPermanently ||
 			response.StatusCode == http.StatusFound {
@@ -782,11 +784,11 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
 		hasErrors = true
 		if netError, ok := err.(net.Error); ok && netError.Timeout() {
 			if f.ProxyFactory != nil && strings.Contains(err.Error(), "proxyconnect") {
-				logs.Error("🔥🔥 proxy %s failed! Error: %v", cmd.HttpClient().ProxyUrl.String(), err)
+				logs.Error("🔥🔥 proxy %s failed! Error: %v", httpClient.ProxyUrl.String(), err)
 			} else if strings.Contains(err.Error(), "Connection refused") {
 				logs.Error("🔥🔥 proxy Connection refused %v", err)
 			} else {
-				logs.Error("🔥 TIMEOUT %s proxy: %s", err, cmd.HttpClient().ProxyUrl.String())
+				logs.Error("🔥 TIMEOUT %s proxy: %s", err, httpClient.ProxyUrl.String())
 			}
 		}
 	}
@@ -809,8 +811,8 @@ recordErr:
 		brokenUrl = f.urlErrors["urls"][rawUrl] > MaxUrlErrors
 	}
 
-	if f.Mirrors != nil && cmd.HttpClient() != nil {
-		mirror := cmd.HttpClient().Mirror
+	if f.Mirrors != nil && httpClient != nil {
+		mirror := httpClient.Mirror
 		if _, exists := f.urlErrors["mirrors"][mirror]; exists {
 			f.urlErrors["mirrors"][mirror]++
 			if f.urlErrors["mirrors"][mirror] > MaxMirrorErrors {
@@ -1106,16 +1108,24 @@ func (f *Fetcher) testMirrors() {
 
 }
 
-func (f *Fetcher) bypass(host, proxyUrl string, httpClient *Client) {
+func (f *Fetcher) bypass(host, proxyUrl string, httpClient *Client) bool {
 	if f.Faloota == nil {
-		return
+		return true
 	}
 	u := "http://" + host
+	r, err, _ := f.Request(&Cmd{U: h.ParseUrl(u), M: "GET", C: httpClient, DisableMirror: true}, 0)
+	if err != nil || r == nil || r.Body == nil || r.StatusCode != http.StatusOK {
+		logs.Error("Falouta error on url %s Error: %v", err)
+	} else {
+		r.Body.Close()
+		return true
+	}
 	cookies, err := f.Faloota.BypassOnce(u, proxyUrl, httpClient.UserAgent, f.FalootaVerify)
 	if err != nil {
 		logs.Error("Falouta error on url %s Error: %v", u, err)
-		return
+		return false
 	}
 	httpClient.Jar.SetCookies(h.ParseUrl(u), cookies)
 	logs.Debug("added cookies to client %+v", cookies)
+	return true
 }
