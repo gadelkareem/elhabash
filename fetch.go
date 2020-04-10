@@ -6,11 +6,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/gadelkareem/cachita"
-	"github.com/gadelkareem/faloota"
-	h "github.com/gadelkareem/go-helpers"
-	"github.com/gadelkareem/quiver"
-	"golang.org/x/text/encoding/htmlindex"
 	"io"
 	"net"
 	"net/http"
@@ -25,6 +20,12 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/gadelkareem/cachita"
+	"github.com/gadelkareem/faloota"
+	h "github.com/gadelkareem/go-helpers"
+	"github.com/gadelkareem/quiver"
+	"golang.org/x/text/encoding/htmlindex"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/astaxie/beego/logs"
@@ -62,10 +63,10 @@ const (
 
 	MaxAllowedGoRoutines = 10000
 
-	//Max number of commands for client before creating a new one - with a new ProxyFactory
+	// Max number of commands for client before creating a new one - with a new ProxyFactory
 	MaximumClientCommands = 300
 
-	//Max number of Url errors
+	// Max number of Url errors
 	MaxUrlErrors    = 20
 	MaxMirrorErrors = 1000
 
@@ -105,7 +106,7 @@ type Fetcher struct {
 	queue        *Queue
 	ShuttingDown bool
 
-	//used mainly to display emoiji instead of debug info
+	// used mainly to display emoiji instead of debug info
 	LogLevel int
 
 	// channels maps the host names to its dedicated requests channel, and channelsMu protects
@@ -138,7 +139,7 @@ type Fetcher struct {
 	sleepingMu        sync.Mutex
 	sleepingProcesses int
 
-	//exclude filter is higher than the include filter
+	// exclude filter is higher than the include filter
 	ExcludeRegexFilter *regexp.Regexp
 	IncludeRegexFilter *regexp.Regexp
 	StopString         string
@@ -339,7 +340,7 @@ loop:
 		f.snapshot.addCommandInQueue(f.uniqueId(command.Url(), command.Method()), command)
 
 		// Send the request
-		//logs.Debug("New command for Url: %s", command.Url())
+		// logs.Debug("New command for Url: %s", command.Url())
 		f.channels[i] <- command
 		i++
 		if i == len(f.channels) {
@@ -364,14 +365,14 @@ func (f *Fetcher) processChan(outChanCommands <-chan Command, routineIndex int) 
 	var (
 		agent *robotstxt.Group
 		ttl   <-chan time.Time
-		//add some random seconds for each channel
+		// add some random seconds for each channel
 		delay              = f.CrawlDelay
 		httpClient         = f.NewClient(true, true)
 		httpClientCommands = 0
 		restartClient      = false
 	)
 
-	//tata tata
+	// tata tata
 	logs.Info("Channel %d is starting..", routineIndex)
 	if routineIndex < 10 {
 		time.Sleep(time.Duration(routineIndex) + 2*time.Second)
@@ -549,7 +550,7 @@ func (f *Fetcher) Request(cmd Command, delay time.Duration) (response *http.Resp
 
 	if response != nil {
 		if response.StatusCode == http.StatusOK ||
-			(httpClient.Mirror == "" && //if we ll cache a redirect or not found then make sure it's not a mirror
+			(httpClient.Mirror == "" && // if we ll cache a redirect or not found then make sure it's not a mirror
 				(response.StatusCode == http.StatusMovedPermanently || response.StatusCode == http.StatusNotFound)) {
 			if cacheId != "" {
 				response.Request = req
@@ -580,7 +581,7 @@ func (f *Fetcher) visit(cmd Command, response *http.Response, err error, isCache
 		if brokenMirror {
 			restartClient = true
 		}
-		if brokenUrl { //too many failures for this Url
+		if brokenUrl { // too many failures for this Url
 			if err != nil && err != ErrDisallowed {
 				logs.Error("🔥 Url %s keeps failing, Error: %v", cmd.Url(), err)
 			}
@@ -589,7 +590,7 @@ func (f *Fetcher) visit(cmd Command, response *http.Response, err error, isCache
 			fmt.Print("🔥")
 		}
 		if !isCached {
-			cmd.SetHttpClient(nil) //make it light for the queue
+			cmd.SetHttpClient(nil) // make it light for the queue
 			f.queue.Send(cmd)
 		}
 		return
@@ -743,14 +744,14 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
 			brokenMirror = !f.bypass(cmd.MirrorUrl().Host, httpClient.ProxyUrl.String(), httpClient)
 			goto recordErr
 		}
-		if response.StatusCode == 549 { //Zaki Edra is still assigning the IP so resend cmd
+		if response.StatusCode == 549 { // Zaki Edra is still assigning the IP so resend cmd
 			goto recordErr
 		}
 		if f.ProxyFactory != nil &&
 			httpClient.ProxyUrl != nil &&
-			(response.StatusCode == 550 || //invalid IP
-				response.StatusCode == 551 || //banned IP
-				response.StatusCode == 552) { //auth problem
+			(response.StatusCode == 550 || // invalid IP
+				response.StatusCode == 551 || // banned IP
+				response.StatusCode == 552) { // auth problem
 			go f.exception(fmt.Sprintf("🔥🔥 proxy %s has Auth problem! status: %d IP: %s URL: %s\n", httpClient.ProxyUrl, response.StatusCode, httpClient.ProxyOutboundIp, cmd.MirrorUrl()))
 			return
 		} else if response.StatusCode == http.StatusMovedPermanently ||
@@ -767,7 +768,7 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
 			if !f.excludeUrl(redirectUrl) {
 				f.Get(redirectUrl)
 			}
-			//mark Url as broken to skip re-queueing & continue to add mirror error
+			// mark Url as broken to skip re-queueing & continue to add mirror error
 			brokenUrl = true
 			return
 
@@ -1050,7 +1051,7 @@ func (f *Fetcher) enqueueLinks(baseUrl *url.URL, document *goquery.Document) {
 		// Resolve address
 		u, err := baseUrl.Parse(val)
 		if err != nil {
-			//fmt.Printf("error: resolve Url %selection - %selection\n", val, err)
+			// fmt.Printf("error: resolve Url %selection - %selection\n", val, err)
 			return
 		}
 		if u.Host == baseUrl.Host {
@@ -1093,7 +1094,7 @@ func (f *Fetcher) testMirrors() {
 			}
 			if rs != nil {
 				errorString += fmt.Sprintf(" Status: %d", rs.StatusCode)
-				//fmt.Printf("%+v", rs)
+				// fmt.Printf("%+v", rs)
 			}
 			logs.Error(errorString)
 		} else {
@@ -1115,7 +1116,7 @@ func (f *Fetcher) bypass(host, proxyUrl string, httpClient *Client) bool {
 	u := "http://" + host
 	r, err, _ := f.Request(&Cmd{U: h.ParseUrl(u), M: "GET", C: httpClient, DisableMirror: true}, 0)
 	if err != nil || r == nil || r.Body == nil || r.StatusCode != http.StatusOK {
-		logs.Error("Falouta error on url %s Error: %v", err)
+		logs.Error("Falouta error on url %s Error: %v - will try to bypass", u, err)
 	} else {
 		r.Body.Close()
 		return true
