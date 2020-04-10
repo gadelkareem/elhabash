@@ -4,8 +4,6 @@ github.com/PuerkitoBio/goquery v1.5.0 h1:uGvmFXOA73IKluu/F84Xd1tt/z07GYm8X49XKHP
 github.com/PuerkitoBio/goquery v1.5.0/go.mod h1:qD2PgZ9lccMbQlc7eEOjaeRlFQON7xY8kdmcsrnKqMg=
 github.com/andybalholm/cascadia v1.0.0 h1:hOCXnnZ5A+3eVDX8pvgl4kofXv2ELss0bKcqRySc45o=
 github.com/andybalholm/cascadia v1.0.0/go.mod h1:GsXiBklL0woXo1j/WYWtSYYC4ouU9PqHO0sqidkEA4Y=
-github.com/andybalholm/cascadia v1.1.0 h1:BuuO6sSfQNFRu1LppgbD25Hr2vLYW25JvxHs5zzsLTo=
-github.com/andybalholm/cascadia v1.1.0/go.mod h1:GsXiBklL0woXo1j/WYWtSYYC4ouU9PqHO0sqidkEA4Y=
 github.com/astaxie/beego v1.11.1/go.mod h1:i69hVzgauOPSw5qeyF4GVZhn7Od0yG5bbCGzmhbWxgQ=
 github.com/astaxie/beego v1.12.0 h1:MRhVoeeye5N+Flul5PoVfD9CslfdoH+xqC/xvSQ5u2Y=
 github.com/astaxie/beego v1.12.0/go.mod h1:fysx+LZNZKnvh4GED/xND7jWtjCR6HzydR2Hh2Im57o=
@@ -34,8 +32,8 @@ github.com/edsrzf/mmap-go v0.0.0-20170320065105-0bce6a688712/go.mod h1:YO35OhQPt
 github.com/elazarl/go-bindata-assetfs v1.0.0/go.mod h1:v+YaWX3bdea5J/mo8dSETolEo7R71Vk1u8bnjau5yw4=
 github.com/gadelkareem/cachita v0.0.0-20190120182126-27c05434ad48 h1:zX9dGvlcwSz2fu6ib89g8dtz23rJCi6+qmxsBokxmdc=
 github.com/gadelkareem/cachita v0.0.0-20190120182126-27c05434ad48/go.mod h1:4LT05LDDyEmidjinKMnpuRIw4I86/sZpGk1ljj+qa5Q=
-github.com/gadelkareem/faloota v0.0.0-20191030111449-f74bdcafa03a h1:bEdhEWoE5D8o1kC6KtAlaVKOu24YzIXtd3fwohGqvTI=
-github.com/gadelkareem/faloota v0.0.0-20191030111449-f74bdcafa03a/go.mod h1:KbmB1U+sFetZTmXl+M/1m2KkHLP9s9EifMDLeZCSeKQ=
+github.com/gadelkareem/faloota v0.0.0-20200410143423-8555b5534554 h1:2qBXywXHf0cqzGpePcUINA/cLx/g9kX+Bk7qVoBILIE=
+github.com/gadelkareem/faloota v0.0.0-20200410143423-8555b5534554/go.mod h1:KbmB1U+sFetZTmXl+M/1m2KkHLP9s9EifMDLeZCSeKQ=
 github.com/gadelkareem/go-helpers v0.0.0-20190319181513-ba9be2e077db/go.mod h1:CrgzdMSK56JBYsFIItseMvw0uDYG8yBV2cvqjSCwOS8=
 github.com/gadelkareem/go-helpers v0.0.0-20191001005417-e8a6f26af331 h1:Q1yoF7LyvjlpNqPqXtAnaL8otnYvDneuNEqlQ0Fs/sQ=
 github.com/gadelkareem/go-helpers v0.0.0-20191001005417-e8a6f26af331/go.mod h1:CrgzdMSK56JBYsFIItseMvw0uDYG8yBV2cvqjSCwOS8=
