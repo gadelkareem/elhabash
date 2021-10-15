@@ -5,7 +5,7 @@ import (
     "net/url"
     "strings"
 
-    h "github.com/gadelkareem/go-helpers"
+    "github.com/gadelkareem/go-helpers"
 )
 
 // Command interface defines the methods required by the Fetcher to request
