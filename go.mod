@@ -1,15 +1,15 @@
 module github.com/gadelkareem/elhabash
 
-go 1.13
+go 1.16
 
 require (
-	github.com/PuerkitoBio/goquery v1.5.0
+	github.com/PuerkitoBio/goquery v1.7.1
 	github.com/astaxie/beego v1.12.3
 	github.com/gadelkareem/cachita v0.2.3
-	github.com/gadelkareem/faloota v0.0.0-20200410143423-8555b5534554
+	github.com/gadelkareem/faloota v0.0.0-20211016014952-5b79e8ca5e85
 	github.com/gadelkareem/go-helpers v0.0.0-20200725110331-77a434fc0423
-	github.com/gadelkareem/quiver v0.0.0-20211018081854-cdc9842c4d8f
-	github.com/temoto/robotstxt v1.1.1
+	github.com/gadelkareem/quiver v0.0.0-20211018083207-68c4a726ea91
+	github.com/temoto/robotstxt v1.1.2
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	golang.org/x/text v0.3.6
+	golang.org/x/text v0.3.7
 )
