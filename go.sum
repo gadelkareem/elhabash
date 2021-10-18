@@ -14,7 +14,6 @@ github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737/go.mod h1:PmM6
 github.com/casbin/casbin v1.7.0/go.mod h1:c67qKN6Oum3UF5Q1+BByfFxkwKvhwW57ITjqwtzR1KE=
 github.com/cenkalti/backoff v2.2.1+incompatible h1:tNowT99t7UNflLxfYYSlKYsBpXdEet03Pg2g16Swow4=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
-github.com/chromedp/cdproto v0.0.0-20191009033829-c22f49c9ff0a h1:AuIGvB6IuWpMEdfKQ+t77D6dzLpNftzxAsktehYyWn8=
 github.com/chromedp/cdproto v0.0.0-20191009033829-c22f49c9ff0a/go.mod h1:PfAWWKJqjlGFYJEidUM6aVIWPr0EpobeyVWEEmplX7g=
 github.com/chromedp/cdproto v0.0.0-20191027233732-553aa270fe0a h1:58yPHuhRoi/4aC3iSAx6PcyfWgjglXsZ3JBGr6BSs7s=
 github.com/chromedp/cdproto v0.0.0-20191027233732-553aa270fe0a/go.mod h1:PfAWWKJqjlGFYJEidUM6aVIWPr0EpobeyVWEEmplX7g=
@@ -35,13 +34,11 @@ github.com/gadelkareem/cachita v0.0.0-20190120182126-27c05434ad48/go.mod h1:4LT0
 github.com/gadelkareem/faloota v0.0.0-20200410143423-8555b5534554 h1:2qBXywXHf0cqzGpePcUINA/cLx/g9kX+Bk7qVoBILIE=
 github.com/gadelkareem/faloota v0.0.0-20200410143423-8555b5534554/go.mod h1:KbmB1U+sFetZTmXl+M/1m2KkHLP9s9EifMDLeZCSeKQ=
 github.com/gadelkareem/go-helpers v0.0.0-20190319181513-ba9be2e077db/go.mod h1:CrgzdMSK56JBYsFIItseMvw0uDYG8yBV2cvqjSCwOS8=
-github.com/gadelkareem/go-helpers v0.0.0-20191001005417-e8a6f26af331 h1:Q1yoF7LyvjlpNqPqXtAnaL8otnYvDneuNEqlQ0Fs/sQ=
 github.com/gadelkareem/go-helpers v0.0.0-20191001005417-e8a6f26af331/go.mod h1:CrgzdMSK56JBYsFIItseMvw0uDYG8yBV2cvqjSCwOS8=
 github.com/gadelkareem/go-helpers v0.0.0-20191028141354-37da31be3be9 h1:gRLPVgKXMMG/5ZKjEOBixBHUPHN0xTNIfxRsUj5LFnI=
 github.com/gadelkareem/go-helpers v0.0.0-20191028141354-37da31be3be9/go.mod h1:NQj6Txfr/VxtlQDQoy14/d6/MyZ5nZX0EatXIVklKpo=
 github.com/gadelkareem/proxy.webshare.io v0.0.0-20191026233143-99e212cfb163 h1:k2UZu8BrBgZujddR+Q9HI55LBNVTOjYv6p+RB7K3ExY=
 github.com/gadelkareem/proxy.webshare.io v0.0.0-20191026233143-99e212cfb163/go.mod h1:upGgAwi+MWE+4bZga82IRwUZm/0/Lu0zfuTqS03tKTg=
-github.com/gadelkareem/quiver v0.0.0-20190920102459-ce47163ff985 h1:lBUesMENVJw2Foe2bYywl5qVzhkpO0NABfJb6lR+yxg=
 github.com/gadelkareem/quiver v0.0.0-20190920102459-ce47163ff985/go.mod h1:n7HaT7SsSsyhcOTzp36w/1HFiSSpIp5uoSPCWesuwlY=
 github.com/gadelkareem/quiver v0.0.0-20191028142518-828461abd15a h1:o6T3W9MVdAyqumrsZzU7KN+p+UZ0LREPj8JuQc/myVs=
 github.com/gadelkareem/quiver v0.0.0-20191028142518-828461abd15a/go.mod h1:MpfYXHQTDf1ZhL+q/dFZX1AQ+AFHXVnSzZKVdKxwXHQ=
