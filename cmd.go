@@ -33,6 +33,9 @@ type Client struct {
 }
 
 func (cl *Client) UpdateDirectProxyURL() {
+    if cl.ProxyURL == nil {
+        return
+    }
     pu := h.ParseUrl(cl.ProxyURL.String())
     port := pu.Port()
     if strings.Contains(cl.ProxyOutboundIp, ":") {
