@@ -686,15 +686,15 @@ func (f *Fetcher) NewClient(withProxy, withMirror bool) *Client {
         return http.ErrUseLastResponse
     }
 
-    host := f.MainHost
+    // host := f.MainHost
     if withMirror && len(f.Mirrors) > 0 {
         f.mirrorsMu.Lock()
         defer f.mirrorsMu.Unlock()
         httpClient.Mirror = f.Mirrors[h.RandomNumber(0, len(f.Mirrors))]
-        host = httpClient.Mirror
+        // host = httpClient.Mirror
     }
-
-    f.bypass(host, httpClient)
+    // println(1)
+    // f.bypass(host, httpClient)
 
     logs.Info("New client created with Mirror: %s, proxy: %s", httpClient.Mirror, httpClient.ProxyURL)
 
@@ -739,7 +739,6 @@ func (f *Fetcher) HandleError(response *http.Response, err error, cmd Command) (
         if response.StatusCode == http.StatusServiceUnavailable &&
             strings.Contains(response.Header.Get("Server"), "cloudflare") {
             logs.Error("🔥🔥 Got Cloudflare error for URL: %s Proxy: %s", cmd.MirrorUrl(), httpClient.ProxyURL)
-
             brokenMirror = !f.bypass(cmd.MirrorUrl().Host, httpClient)
             goto recordErr
         }
@@ -1067,6 +1066,7 @@ func (f *Fetcher) enqueueLinks(baseUrl *url.URL, document *goquery.Document) {
 }
 
 func (f *Fetcher) testMirrors() {
+    logs.Info("Testing Mirros")
     if f.Mirrors == nil || f.DisableMirrorTesting {
         return
     }
@@ -1077,13 +1077,22 @@ func (f *Fetcher) testMirrors() {
     var mirrors []string
     for _, mirror := range f.Mirrors {
         rawUrl := "http://" + mirror + "/"
+        logs.Info("Testing Mirro %s", rawUrl)
         u, err := url.Parse(rawUrl)
         if err != nil {
             go f.exception(err.Error())
             return
         }
         f.InvalidateCache(u, "GET")
-        f.bypass(mirror, httpClient)
+        h.Retry(func() error {
+            if !f.bypass(mirror, httpClient) {
+                logs.Error("Error with mirror %s using proxy %s: %s", mirror, httpClient.ProxyURL, httpClient.ProxyOutboundIp)
+                httpClient = f.NewClient(true, false)
+                httpClient.CheckRedirect = nil
+                return errors.New("")
+            }
+            return nil
+        }, 3)
         // Do the request.
         rs, err, _ := f.Request(&Cmd{U: u, M: "GET", C: httpClient}, 0)
         if err != nil || rs.StatusCode != http.StatusOK {

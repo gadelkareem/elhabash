@@ -24,6 +24,8 @@ github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QH
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/chromedp/cdproto v0.0.0-20210713064928-7d28b402946a h1:B6EyBXuMsFyrUoBrNXdt+Vf3vQNpN4DU/Xv96R4BdFg=
 github.com/chromedp/cdproto v0.0.0-20210713064928-7d28b402946a/go.mod h1:At5TxYYdxkbQL0TSefRjhLE3Q0lgvqKKMSFUglJ7i1U=
+github.com/chromedp/cdproto v0.0.0-20211019232255-96776d03ee97 h1:PsCSKv+8vQIauxqUcBztLD8lAlchFUFVZbO70/T6xmE=
+github.com/chromedp/cdproto v0.0.0-20211019232255-96776d03ee97/go.mod h1:At5TxYYdxkbQL0TSefRjhLE3Q0lgvqKKMSFUglJ7i1U=
 github.com/chromedp/chromedp v0.7.4 h1:U+0d3WbB/Oj4mDuBOI0P7S3PJEued5UZIl5AJ3QulwU=
 github.com/chromedp/chromedp v0.7.4/go.mod h1:dBj+SXuQHznp6ZPwZeDDEBZKwclUwDLbZ0hjMialMYs=
 github.com/chromedp/sysutil v1.0.0 h1:+ZxhTpfpZlmchB58ih/LBHX52ky7w2VhQVKQMucy3Ic=
@@ -45,6 +47,8 @@ github.com/gadelkareem/cachita v0.2.3 h1:VLR5rddytxM6BA+VrOcD0GjRhcXv+xwai/U4Jq/
 github.com/gadelkareem/cachita v0.2.3/go.mod h1:xxh2RDZCXnVZQM7A/txZFFyEf3DHX+VWZ+Qgg/WOWVI=
 github.com/gadelkareem/faloota v0.0.0-20211016014952-5b79e8ca5e85 h1:ejp5kNdry76U7j59d4p00D6gRlH+FyNcpFdp+foVkMM=
 github.com/gadelkareem/faloota v0.0.0-20211016014952-5b79e8ca5e85/go.mod h1:779xyEVZxe8Gve95e73EJnuqLRBPNAcdJ4TwcvzKL8s=
+github.com/gadelkareem/faloota v0.0.0-20211021172044-c5b1232fb7f0 h1:fcOsfVdLs3iXodQ9xczGI1cxMNyAKfICyJ9KUmH9OZ8=
+github.com/gadelkareem/faloota v0.0.0-20211021172044-c5b1232fb7f0/go.mod h1:779xyEVZxe8Gve95e73EJnuqLRBPNAcdJ4TwcvzKL8s=
 github.com/gadelkareem/go-helpers v0.0.0-20191028141354-37da31be3be9/go.mod h1:NQj6Txfr/VxtlQDQoy14/d6/MyZ5nZX0EatXIVklKpo=
 github.com/gadelkareem/go-helpers v0.0.0-20200725110331-77a434fc0423 h1:eERtwaJW5EGq/2DH0WzoxQXPaz7kD4N5z8p/qJ2rHfU=
 github.com/gadelkareem/go-helpers v0.0.0-20200725110331-77a434fc0423/go.mod h1:NQj6Txfr/VxtlQDQoy14/d6/MyZ5nZX0EatXIVklKpo=
@@ -191,6 +195,8 @@ golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271/go.mod h1:z5CRVTTTmAJ677TzLL
 golang.org/x/net v0.0.0-20210614182718-04defd469f4e/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f h1:OfiFi4JbukWwe3lzw+xunroH1mnC1e2Gy5cxNJApiSY=
 golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
+golang.org/x/net v0.0.0-20211020060615-d418f374d309 h1:A0lJIi+hcTR6aajJH4YqKWwohY4aW9RO7oRMcdv+HKI=
+golang.org/x/net v0.0.0-20211020060615-d418f374d309/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
@@ -209,6 +215,8 @@ golang.org/x/sys v0.0.0-20201207223542-d4d67f95c62d/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20210423082822-04245dca01da/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea h1:+WiDlPBBaO+h9vPNZi8uJ3k4BkKQB7Iow3aqwHVA5hI=
 golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20211020174200-9d6173849985 h1:LOlKVhfDyahgmqa97awczplwkjzNaELFg3zRIJ13RYo=
+golang.org/x/sys v0.0.0-20211020174200-9d6173849985/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=
